@@ -1,0 +1,9 @@
+pyproject.toml
+bharatopt/__init__.py
+bharatopt/cli.py
+bharatopt.egg-info/PKG-INFO
+bharatopt.egg-info/SOURCES.txt
+bharatopt.egg-info/dependency_links.txt
+bharatopt.egg-info/entry_points.txt
+bharatopt.egg-info/requires.txt
+bharatopt.egg-info/top_level.txt
