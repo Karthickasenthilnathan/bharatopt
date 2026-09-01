@@ -20,7 +20,7 @@ from .solver import branch_and_bound as bnb_module
 from .solver.branch_and_bound import branch_and_bound
 from .ui.bnb_view import display_bnb
 
-app = typer.Typer(help="BharatOpt – a demonstration CLI that prints the optimisation pipeline and solves toy LPs.")
+app = typer.Typer(help="BharatOpt – a demonstration CLI that prints the optimisation pipeline and solves LPs.")
 
 # Define the pipeline stages in order
 STAGES = [
@@ -57,8 +57,8 @@ def show_pipeline() -> None:
     console.print()
 
 @app.command()
-def solve(lp_name: str = typer.Argument(..., help="Name of the toy problem to solve (lp1, lp2, milp1)"), milp: bool = typer.Option(False, "--milp", help="Solve as MILP using branch‑and‑bound")) -> None:
-    """Solve a toy problem.
+def solve(lp_name: str = typer.Argument(..., help="Name of the problem to solve (lp1, lp2, milp1, itc_allocation)"), milp: bool = typer.Option(False, "--milp", help="Solve as MILP using branch‑and‑bound")) -> None:
+    """Solve a problem.
 
     If ``milp`` is ``True`` the problem is treated as a mixed‑integer linear program
     and solved with the branch‑and‑bound algorithm; otherwise the bounded‑variable
@@ -69,6 +69,8 @@ def solve(lp_name: str = typer.Argument(..., help="Name of the toy problem to so
         typer.echo(f"[red]Unknown problem '{lp_name}'. Available: {', '.join(ALL_LPS)}[/]")
         raise typer.Exit(code=1)
     lp = ALL_LPS[key]
+    if lp.get("disclaimer"):
+        console.print(lp["disclaimer"])
     if milp:
         gen = branch_and_bound(lp)
         display_bnb(lp_name.upper(), gen)
@@ -78,11 +80,14 @@ def solve(lp_name: str = typer.Argument(..., help="Name of the toy problem to so
         display_solver(lp_name.upper(), gen, lp)
         final = list(dual_simplex(lp))[-1]
         obj = final["objective"]
-    known = lp["optimal"]
-    if abs(obj - known) <= 1e-7:
-        console.print(f"[green]MATCHES KNOWN OPTIMUM ({known})[/]")
+    reported_obj = obj * lp.get("report_objective_sign", 1.0)
+    known = lp.get("reported_optimal", lp["optimal"])
+    tolerance = lp.get("optimum_tolerance", 1e-7)
+    if abs(reported_obj - known) <= tolerance:
+        label = lp.get("verified_label", "MATCHES KNOWN OPTIMUM")
+        console.print(f"[green]{label} ({known})[/]")
     else:
-        console.print(f"[red]MISMATCH — DEBUG (obj={obj}, known={known})[/]")
+        console.print(f"[red]MISMATCH — DEBUG (obj={reported_obj}, known={known})[/]")
 
 
 
@@ -108,6 +113,13 @@ def solve_milp(milp_name: str = typer.Argument(..., help="Name of the MILP to so
         console.print(f"[green]MATCHES KNOWN OPTIMUM ({known})[/]")
     else:
         console.print(f"[red]MISMATCH — DEBUG (obj={obj}, known={known})[/]")
+
+@app.command()
+def serve() -> None:
+    """Start the BharatOpt FastAPI web server."""
+    from .web.main import main
+
+    main()
 
 if __name__ == "__main__":
     app()

@@ -1,2 +1,2 @@
 [console_scripts]
-bharatopt = bharatopt.cli:show_pipeline
+bharatopt = bharatopt.cli:app

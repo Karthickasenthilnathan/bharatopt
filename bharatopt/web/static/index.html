@@ -1,0 +1,697 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>BharatOpt Phase A Demo</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+    <style>
+      :root {
+        --bg: #080b10;
+        --panel: #101722;
+        --panel-2: #131c2a;
+        --line: #263448;
+        --text: #e7edf6;
+        --muted: #94a3b8;
+        --accent: #22d3ee;
+        --accent-soft: rgba(34, 211, 238, 0.14);
+        --good: #22c55e;
+        --good-soft: rgba(34, 197, 94, 0.16);
+        --bad: #ef4444;
+        --bad-soft: rgba(239, 68, 68, 0.16);
+        --blue: #38bdf8;
+        --gray: #64748b;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        color: var(--text);
+        background:
+          radial-gradient(circle at 20% 0%, rgba(34, 211, 238, 0.09), transparent 34rem),
+          linear-gradient(180deg, #090d14 0%, var(--bg) 42rem);
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        letter-spacing: 0;
+      }
+
+      main {
+        width: min(1180px, calc(100% - 32px));
+        margin: 0 auto;
+        padding: 32px 0 56px;
+      }
+
+      header {
+        display: grid;
+        gap: 10px;
+        margin-bottom: 24px;
+        padding: 20px 0 6px;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin: 0;
+      }
+
+      h1 {
+        font-size: clamp(32px, 5vw, 58px);
+        line-height: 1.03;
+        font-weight: 800;
+      }
+
+      h2 {
+        font-size: 22px;
+        line-height: 1.2;
+        font-weight: 750;
+      }
+
+      h3 {
+        font-size: 15px;
+        color: var(--muted);
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+
+      p {
+        color: var(--muted);
+        line-height: 1.55;
+      }
+
+      .eyebrow {
+        color: var(--accent);
+        font-family: "Cascadia Mono", "Consolas", monospace;
+        font-size: 13px;
+        text-transform: uppercase;
+      }
+
+      .grid {
+        display: grid;
+        gap: 18px;
+      }
+
+      .card {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: linear-gradient(180deg, rgba(19, 28, 42, 0.96), rgba(12, 17, 25, 0.96));
+        box-shadow: 0 18px 48px rgba(0, 0, 0, 0.25);
+        padding: 20px;
+      }
+
+      .section-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 14px;
+        margin-bottom: 16px;
+      }
+
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      button {
+        border: 1px solid rgba(34, 211, 238, 0.54);
+        border-radius: 8px;
+        background: var(--accent-soft);
+        color: var(--text);
+        cursor: pointer;
+        font: 700 13px "Cascadia Mono", "Consolas", monospace;
+        padding: 10px 13px;
+      }
+
+      button:hover,
+      button.active {
+        background: rgba(34, 211, 238, 0.26);
+        border-color: var(--accent);
+      }
+
+      .flow {
+        display: grid;
+        grid-template-columns: repeat(8, minmax(112px, 1fr));
+        gap: 10px;
+        overflow-x: auto;
+        padding-bottom: 2px;
+      }
+
+      .stage {
+        min-height: 82px;
+        border: 1px solid rgba(34, 211, 238, 0.34);
+        border-radius: 8px;
+        background: var(--panel-2);
+        padding: 12px;
+        position: relative;
+      }
+
+      .stage::after {
+        content: ">";
+        position: absolute;
+        right: -11px;
+        top: 29px;
+        color: var(--accent);
+        font-family: "Cascadia Mono", "Consolas", monospace;
+        font-weight: 800;
+      }
+
+      .stage:last-child::after {
+        content: "";
+      }
+
+      .stage-index,
+      .mono,
+      td.num {
+        font-family: "Cascadia Mono", "Consolas", monospace;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .stage-index {
+        color: var(--accent);
+        font-size: 12px;
+        margin-bottom: 8px;
+      }
+
+      .stage-name {
+        font-weight: 750;
+        line-height: 1.25;
+      }
+
+      .status-line {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px;
+        margin: 14px 0;
+        padding: 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: rgba(2, 6, 23, 0.36);
+      }
+
+      .status {
+        border-radius: 8px;
+        font: 800 12px "Cascadia Mono", "Consolas", monospace;
+        letter-spacing: 0;
+        padding: 7px 9px;
+      }
+
+      .status.good {
+        color: #b8ffd0;
+        background: var(--good-soft);
+        border: 1px solid rgba(34, 197, 94, 0.52);
+      }
+
+      .status.bad {
+        color: #ffd0d0;
+        background: var(--bad-soft);
+        border: 1px solid rgba(239, 68, 68, 0.52);
+      }
+
+      .kkt-row {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(160px, 1fr));
+        gap: 10px;
+        margin: 14px 0;
+      }
+
+      .kkt {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: rgba(15, 23, 42, 0.64);
+        padding: 12px;
+      }
+
+      .kkt-pass {
+        color: var(--good);
+      }
+
+      .kkt-fail {
+        color: var(--bad);
+      }
+
+      .kkt-name {
+        display: block;
+        margin-bottom: 6px;
+        color: var(--muted);
+        font-size: 12px;
+        text-transform: uppercase;
+      }
+
+      .split {
+        display: grid;
+        grid-template-columns: minmax(280px, 0.92fr) minmax(320px, 1.08fr);
+        gap: 16px;
+        align-items: start;
+      }
+
+      .chart-wrap {
+        min-height: 300px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: rgba(2, 6, 23, 0.3);
+        padding: 14px;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        overflow: hidden;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        font-size: 13px;
+      }
+
+      th,
+      td {
+        border-bottom: 1px solid var(--line);
+        padding: 10px 11px;
+        text-align: left;
+        vertical-align: top;
+      }
+
+      th {
+        color: var(--muted);
+        background: rgba(15, 23, 42, 0.78);
+        font-size: 12px;
+        text-transform: uppercase;
+      }
+
+      tbody tr:last-child td {
+        border-bottom: 0;
+      }
+
+      .node-branched td {
+        border-left: 3px solid var(--blue);
+      }
+
+      .node-pruned td {
+        border-left: 3px solid var(--gray);
+        color: #cbd5e1;
+      }
+
+      .node-incumbent td {
+        border-left: 3px solid var(--good);
+      }
+
+      .disclaimer {
+        border: 1px solid rgba(34, 211, 238, 0.46);
+        border-radius: 8px;
+        background: rgba(34, 211, 238, 0.12);
+        color: #cffafe;
+        margin: 14px 0;
+        padding: 14px;
+        font-weight: 700;
+        line-height: 1.45;
+      }
+
+      .placeholder,
+      .error {
+        border: 1px dashed var(--line);
+        border-radius: 8px;
+        color: var(--muted);
+        padding: 16px;
+      }
+
+      .error {
+        border-color: rgba(239, 68, 68, 0.6);
+        color: #fecaca;
+      }
+
+      @media (max-width: 860px) {
+        main {
+          width: min(100% - 24px, 1180px);
+        }
+
+        .section-head,
+        .split {
+          display: grid;
+        }
+
+        .kkt-row {
+          grid-template-columns: 1fr;
+        }
+
+        .flow {
+          grid-template-columns: repeat(8, minmax(126px, 1fr));
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <div class="eyebrow">Phase A endpoints</div>
+        <h1>BharatOpt Solver Console</h1>
+        <p>Vanilla JavaScript UI for the existing FastAPI endpoints. Charts and tables render only values returned by the backend.</p>
+      </header>
+
+      <div class="grid">
+        <section class="card" id="pipeline-card">
+          <div class="section-head">
+            <div>
+              <h2>Pipeline</h2>
+              <p>Static optimization flow from <span class="mono">/api/pipeline</span>.</p>
+            </div>
+          </div>
+          <div id="pipeline" class="flow"></div>
+        </section>
+
+        <section class="card" id="lp-card">
+          <div class="section-head">
+            <div>
+              <h2>LP Solver</h2>
+              <p>Dual simplex iterations, KKT checks, and backend objective verification.</p>
+            </div>
+            <div class="actions">
+              <button type="button" data-lp="lp1">LP1</button>
+              <button type="button" data-lp="lp2">LP2</button>
+            </div>
+          </div>
+          <div id="lp-output" class="placeholder">Choose LP1 or LP2 to fetch solver output.</div>
+        </section>
+
+        <section class="card" id="milp-card">
+          <div class="section-head">
+            <div>
+              <h2>MILP Solver</h2>
+              <p>Branch-and-bound gap history and node events from <span class="mono">/api/solve-milp/milp1</span>.</p>
+            </div>
+            <div class="actions">
+              <button type="button" id="milp-button">MILP1</button>
+            </div>
+          </div>
+          <div id="milp-output" class="placeholder">Run MILP1 to fetch branch-and-bound output.</div>
+        </section>
+
+        <section class="card" id="itc-card">
+          <div class="section-head">
+            <div>
+              <h2>Real-World Data: ITC Allocation</h2>
+              <p>Capital allocation result fetched from <span class="mono">/api/itc-allocation</span>.</p>
+            </div>
+          </div>
+          <div id="itc-output" class="placeholder">Loading ITC allocation...</div>
+        </section>
+
+        <section class="card" id="roadmap-card">
+          <div class="section-head">
+            <div>
+              <h2>Roadmap</h2>
+              <p>Implemented, simplified, and future scope from <span class="mono">/api/roadmap</span>.</p>
+            </div>
+          </div>
+          <div id="roadmap" class="placeholder">Loading roadmap...</div>
+        </section>
+      </div>
+    </main>
+
+    <script>
+      const ChartLib = typeof Chart === "undefined" ? null : Chart;
+      const accent = "#22d3ee";
+      const good = "#22c55e";
+      const muted = "#94a3b8";
+      const grid = "rgba(148, 163, 184, 0.18)";
+      const charts = {};
+
+      if (ChartLib) {
+        ChartLib.defaults.color = muted;
+        ChartLib.defaults.borderColor = grid;
+        ChartLib.defaults.font.family = 'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+      }
+
+      const titleCase = (value) => String(value)
+        .replace(/_/g, " ")
+        .replace(/\b\w/g, (letter) => letter.toUpperCase());
+
+      const escapeHtml = (value) => String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+
+      const fmt = (value) => {
+        if (value === null || value === undefined || Number.isNaN(Number(value))) return "-";
+        return Number(value).toLocaleString("en-IN", {
+          maximumFractionDigits: 6,
+        });
+      };
+
+      async function getJson(url) {
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error(`${url} returned HTTP ${response.status}`);
+        }
+        return response.json();
+      }
+
+      function renderError(target, error) {
+        document.querySelector(target).innerHTML = `<div class="error">${escapeHtml(error.message)}</div>`;
+      }
+
+      function verificationLine(data) {
+        const label = data.matches ? "MATCHES VERIFIED OPTIMUM" : "MISMATCH";
+        const cls = data.matches ? "good" : "bad";
+        return `
+          <div class="status-line">
+            <span class="status ${cls}">${label}</span>
+            <span>objective <span class="mono">${fmt(data.objective)}</span></span>
+            <span>known optimum <span class="mono">${fmt(data.known_optimum)}</span></span>
+          </div>
+        `;
+      }
+
+      function renderKkt(kkt) {
+        return `
+          <div class="kkt-row">
+            ${Object.entries(kkt).map(([name, check]) => `
+              <div class="kkt">
+                <span class="kkt-name">${titleCase(name)}</span>
+                <strong class="${check.passed ? "kkt-pass" : "kkt-fail"}">${check.passed ? "PASS" : "FAIL"}</strong>
+                <span class="mono"> value ${fmt(check.value)}</span>
+              </div>
+            `).join("")}
+          </div>
+        `;
+      }
+
+      function renderIterationTable(iterations) {
+        return `
+          <table>
+            <thead>
+              <tr>
+                <th>Iteration</th>
+                <th>Entering</th>
+                <th>Leaving</th>
+                <th>Objective</th>
+                <th>Primal Infeas.</th>
+                <th>Dual Infeas.</th>
+                <th>Primal</th>
+                <th>Dual</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${iterations.map((row) => `
+                <tr>
+                  <td class="num">${fmt(row.iteration)}</td>
+                  <td>${escapeHtml(row.entering_var ?? "-")}</td>
+                  <td>${escapeHtml(row.leaving_var ?? "-")}</td>
+                  <td class="num">${fmt(row.objective)}</td>
+                  <td class="num">${fmt(row.primal_infeasibility)}</td>
+                  <td class="num">${fmt(row.dual_infeasibility)}</td>
+                  <td class="num">[${row.primal.map(fmt).join(", ")}]</td>
+                  <td class="num">[${row.dual.map(fmt).join(", ")}]</td>
+                </tr>
+              `).join("")}
+            </tbody>
+          </table>
+        `;
+      }
+
+      async function loadPipeline() {
+        try {
+          const data = await getJson("/api/pipeline");
+          document.querySelector("#pipeline").innerHTML = data.stages.map((stage) => `
+            <div class="stage">
+              <div class="stage-index">STAGE ${fmt(stage.index)}</div>
+              <div class="stage-name">${escapeHtml(stage.name)}</div>
+            </div>
+          `).join("");
+        } catch (error) {
+          renderError("#pipeline-card", error);
+        }
+      }
+
+      async function loadLp(name) {
+        const output = document.querySelector("#lp-output");
+        document.querySelectorAll("[data-lp]").forEach((button) => {
+          button.classList.toggle("active", button.dataset.lp === name);
+        });
+        output.innerHTML = `<div class="placeholder">Loading ${escapeHtml(name.toUpperCase())}...</div>`;
+        try {
+          const data = await getJson(`/api/solve-lp/${name}`);
+          output.innerHTML = `
+            ${verificationLine(data)}
+            ${renderKkt(data.kkt)}
+            ${renderIterationTable(data.iterations)}
+          `;
+        } catch (error) {
+          output.innerHTML = `<div class="error">${escapeHtml(error.message)}</div>`;
+        }
+      }
+
+      function drawChart(id, canvasId, config) {
+        if (!ChartLib) return;
+        if (charts[id]) charts[id].destroy();
+        charts[id] = new ChartLib(document.getElementById(canvasId), config);
+      }
+
+      function renderNodeTable(nodes) {
+        return `
+          <table>
+            <thead>
+              <tr>
+                <th>Node</th>
+                <th>Parent</th>
+                <th>Depth</th>
+                <th>LP Bound</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${nodes.map((node) => `
+                <tr class="node-${escapeHtml(node.status)}">
+                  <td class="num">${fmt(node.node_id)}</td>
+                  <td class="num">${fmt(node.parent_id)}</td>
+                  <td class="num">${fmt(node.depth)}</td>
+                  <td class="num">${fmt(node.lp_bound)}</td>
+                  <td>${escapeHtml(node.status)}</td>
+                </tr>
+              `).join("")}
+            </tbody>
+          </table>
+        `;
+      }
+
+      async function loadMilp() {
+        const output = document.querySelector("#milp-output");
+        document.querySelector("#milp-button").classList.add("active");
+        output.innerHTML = `<div class="placeholder">Loading MILP1...</div>`;
+        try {
+          const data = await getJson("/api/solve-milp/milp1");
+          output.innerHTML = `
+            ${verificationLine(data)}
+            <div class="split">
+              <div class="chart-wrap"><canvas id="gap-chart"></canvas></div>
+              <div>${renderNodeTable(data.nodes)}</div>
+            </div>
+          `;
+          drawChart("gap", "gap-chart", {
+            type: "line",
+            data: {
+              labels: data.gap_history.map((point) => point.node_count),
+              datasets: [{
+                label: "Gap %",
+                data: data.gap_history.map((point) => point.gap_pct),
+                borderColor: accent,
+                backgroundColor: "rgba(34, 211, 238, 0.16)",
+                pointRadius: 3,
+                tension: 0.28,
+                spanGaps: false,
+              }],
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              scales: {
+                x: { title: { display: true, text: "Node count" } },
+                y: { title: { display: true, text: "Gap %" }, beginAtZero: true },
+              },
+              plugins: { legend: { display: false } },
+            },
+          });
+        } catch (error) {
+          output.innerHTML = `<div class="error">${escapeHtml(error.message)}</div>`;
+        }
+      }
+
+      async function loadItc() {
+        try {
+          const data = await getJson("/api/itc-allocation");
+          const names = Object.keys(data.allocation);
+          const values = Object.values(data.allocation);
+          document.querySelector("#itc-output").innerHTML = `
+            <div class="disclaimer">
+              ${escapeHtml(data.disclaimer_text)}
+              Capital budget and segment caps are derived
+            </div>
+            ${verificationLine(data)}
+            ${renderKkt(data.kkt)}
+            <div class="chart-wrap"><canvas id="itc-chart"></canvas></div>
+          `;
+          drawChart("itc", "itc-chart", {
+            type: "bar",
+            data: {
+              labels: names,
+              datasets: [{
+                label: "Capital allocated",
+                data: values,
+                borderColor: accent,
+                backgroundColor: "rgba(34, 211, 238, 0.62)",
+                borderWidth: 1,
+              }],
+            },
+            options: {
+              indexAxis: "y",
+              responsive: true,
+              maintainAspectRatio: false,
+              scales: {
+                x: { title: { display: true, text: "Capital allocated" }, beginAtZero: true },
+              },
+              plugins: { legend: { display: false } },
+            },
+          });
+        } catch (error) {
+          document.querySelector("#itc-output").innerHTML = `<div class="error">${escapeHtml(error.message)}</div>`;
+        }
+      }
+
+      async function loadRoadmap() {
+        try {
+          const data = await getJson("/api/roadmap");
+          document.querySelector("#roadmap").innerHTML = `
+            <table>
+              <thead>
+                <tr>${data.columns.map((column) => `<th>${titleCase(column)}</th>`).join("")}</tr>
+              </thead>
+              <tbody>
+                ${data.rows.map((row) => `
+                  <tr>
+                    ${data.columns.map((column) => `
+                      <td>${row[column].map((item) => `<div>${escapeHtml(item)}</div>`).join("")}</td>
+                    `).join("")}
+                  </tr>
+                `).join("")}
+              </tbody>
+            </table>
+          `;
+        } catch (error) {
+          renderError("#roadmap-card", error);
+        }
+      }
+
+      document.querySelectorAll("[data-lp]").forEach((button) => {
+        button.addEventListener("click", () => loadLp(button.dataset.lp));
+      });
+      document.querySelector("#milp-button").addEventListener("click", loadMilp);
+
+      loadPipeline();
+      loadItc();
+      loadRoadmap();
+    </script>
+  </body>
+</html>
